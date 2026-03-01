@@ -83,13 +83,25 @@ var portfolioContext string
 // ---------------------------------------------------------------------------
 
 func loadPortfolio(path string) error {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("read portfolio: %w", err)
+	var raw []byte
+
+	// Prefer the env var (used in production / GitHub secrets)
+	if env := os.Getenv("PORTFOLIO_JSON"); env != "" {
+		log.Println("Portfolio loaded from PORTFOLIO_JSON env var.")
+		raw = []byte(env)
+	} else {
+		// Fall back to local file for development
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("read portfolio file: %w", err)
+		}
+		log.Printf("Portfolio loaded from file: %s", path)
+		raw = data
 	}
+
 	var p Portfolio
 	if err := json.Unmarshal(raw, &p); err != nil {
-		return fmt.Errorf("parse portfolio: %w", err)
+		return fmt.Errorf("parse portfolio JSON: %w", err)
 	}
 	compact, err := json.MarshalIndent(p, "", "  ")
 	if err != nil {
