@@ -82,21 +82,15 @@ var portfolioContext string
 // Portfolio loader
 // ---------------------------------------------------------------------------
 
-func loadPortfolio(path string) error {
+func loadPortfolio() error {
 	var raw []byte
 
-	// Prefer the env var (used in production / GitHub secrets)
-	if env := os.Getenv("PORTFOLIO_JSON"); env != "" {
-		log.Println("Portfolio loaded from PORTFOLIO_JSON env var.")
+	// Prefer env var in production so the portfolio JSON file isn't exposed.
+	if env := os.Getenv("PORTOFOLIO_ENV"); env != "" {
+		log.Println("Portfolio loaded from PORTOFOLIO_ENV env var.")
 		raw = []byte(env)
 	} else {
-		// Fall back to local file for development
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return fmt.Errorf("read portfolio file: %w", err)
-		}
-		log.Printf("Portfolio loaded from file: %s", path)
-		raw = data
+		return fmt.Errorf("missing required env var PORTOFOLIO_ENV")
 	}
 
 	var p Portfolio
@@ -193,7 +187,7 @@ func main() {
 	// Load .env file (silently ignored if it doesn't exist)
 	_ = godotenv.Load()
 
-	if err := loadPortfolio("data/portfolio.json"); err != nil {
+	if err := loadPortfolio(); err != nil {
 		log.Fatalf("Failed to load portfolio: %v", err)
 	}
 	log.Println("Portfolio knowledge base loaded.")
